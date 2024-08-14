@@ -59,7 +59,3 @@ def identificar_persona(mensagem_usuario):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-
-personalidade = personas[identificar_persona('oii, me fala onde posso comer macarrão, por favor? :)')]
-
-print(personalidade)

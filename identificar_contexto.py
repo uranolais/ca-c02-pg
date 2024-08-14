@@ -2,33 +2,36 @@ import anthropic
 import dotenv
 import os
 from helpers import *
-from identificar_persona import *
-from identificar_contexto import *
 
 dotenv.load_dotenv()
 cliente = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
 modelo = "claude-3-5-sonnet-20240620"
-# contexto = carrega('./dados/SaborExpress.txt')
+dados_SaborExpress = carrega('./dados/dados_SaborExpress.txt')
+politicas_SaborExpress = carrega('./dados/politicas_SaborExpress.txt')
+cadastro_SaborExpress = carrega('./dados/cadastro_SaborExpress.txt')
 
-def bot(prompt):
-    personalidade = personas[identificar_persona(prompt)]
-    contexto = identificar_contexto(prompt)
-    documento_contexto = selecionar_documento(contexto)
+def selecionar_documento(resposta):
+    if "politicas" in resposta:
+        return dados_SaborExpress + '\n' + politicas_SaborExpress
+    elif "cadastro" in resposta:
+        return dados_SaborExpress + '\n' + cadastro_SaborExpress
+    else:
+        return dados_SaborExpress
+
+def identificar_contexto(mensagem_usuario):
     prompt_do_sistema = f"""
-    Você é um chatbot de atendimento a clientes de um aplicativo de entrega para restaurantes, padarias, mercados e farmácias.
-    Você não pode e nem deve responder perguntas que não sejam dados do aplicativo informado!
-    Você deve gerar respostas utilizando o contexto abaixo.
-    Você deve adotar a persona abaixo para responder a mensagem.
-            
-    # Contexto
-    {documento_contexto}
+        A empresa Sabor Express possui três documentos principais que detalham diferentes aspectos do negócio:
 
-    # Persona
-    {personalidade}
+        #Documento 1 "\n {dados_SaborExpress} "\n"
+        #Documento 2 "\n" {politicas_SaborExpress} "\n"
+        #Documento 3 "\n" {cadastro_SaborExpress} "\n"
+
+        Avalie o prompt do usuário e retorne o documento mais indicado para ser usado no contexto da resposta. Retorne 'dados' se for o Documento 1, 'políticas' se for o Documento 2 e 'cadastro' se for o Documento 3. 
     """
-    prompt_do_usuario = prompt
+    prompt_do_usuario = mensagem_usuario
+
     try:
         mensagem = cliente.messages.create(
             model=modelo,
@@ -47,7 +50,7 @@ def bot(prompt):
                 }
             ]
         )
-        resposta = mensagem.content[0].text
+        resposta = mensagem.content[0].text.lower()
         return resposta
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
