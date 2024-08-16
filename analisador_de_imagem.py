@@ -8,7 +8,7 @@ cliente = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
 modelo = "claude-3-5-sonnet-20240620"
-restaurantes = carrega('./dados/dados_SaborExpress.txt')
+# restaurantes = carrega('./dados/dados_SaborExpress.txt')
 
 def analisar_imagem(caminho_imagem):
     prompt_do_sistema = f"""
@@ -23,7 +23,7 @@ def analisar_imagem(caminho_imagem):
         Minha análise para imagem consiste em: Indicação de restaurante que venda esse alimento (se tiver em um restaurante cadastrado)
         
         # RESTAURANTES
-        {restaurantes}
+        Restaurantes do Sabor Express
         
         ## Descreva a imagem
         coloque a descrição aqui
@@ -62,5 +62,5 @@ def analisar_imagem(caminho_imagem):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-imagem_analisada = analisar_imagem('./fotos/macarronada.jpg')
-print(imagem_analisada)
+# imagem_analisada = analisar_imagem('./fotos/macarronada.jpg')
+# print(imagem_analisada)

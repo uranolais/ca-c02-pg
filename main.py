@@ -3,9 +3,13 @@ from bot import bot
 from helpers import *
 import os
 from resumidor_de_historico import criar_resumo
+import uuid
 
 app = Flask(__name__)
 app.secret_key = 'alura'
+
+PASTA_DE_UPLOAD = 'fotos'
+caminho_da_imagem = None
 
 @app.route("/")
 def home():
@@ -13,13 +17,14 @@ def home():
 
 @app.route("/chat", methods = ['POST'])
 def chat():
+    global caminho_da_imagem
     prompt = request.json["msg"]
     nome_do_arquivo = './historico/historico_SaborExpress'
     historico = ''
     if os.path.exists(nome_do_arquivo):
         historico = carrega(nome_do_arquivo)
     historico_resumido = criar_resumo(historico)
-    resposta = bot(prompt, historico_resumido)
+    resposta,caminho_da_imagem = bot(prompt, historico_resumido,caminho_da_imagem)
     conteudo = f"""
     Histórico: {historico_resumido}
     Usuário: {prompt}
@@ -28,7 +33,7 @@ def chat():
     salva(nome_do_arquivo,conteudo)
     return resposta
 
-@app.route("/limparhistorico", methods = ["POST"])
+@app.route("/limpar_historico", methods = ["POST"])
 def limpar_historico():
     nome_do_arquivo = './historico/historico_SaborExpress'
     if os.path.exists(nome_do_arquivo):
@@ -37,6 +42,18 @@ def limpar_historico():
     else: 
         print("Não foi possivel remover esse arquivo!")
     return {}
+
+@app.route("/upload_imagem", methods = ["POST"])
+def upload_imagem():
+    global caminho_da_imagem
+    if 'imagem' in request.files:
+        imagem_enviada_no_chatbot = request.files['imagem']
+        nome_do_arquivo = str(uuid.uuid4()) + os.path.splitext(imagem_enviada_no_chatbot.filename)[1] # macarronada.png => ('macarronada','.png') => (0,1)
+        caminho_do_arquivo = os.path.join(PASTA_DE_UPLOAD,nome_do_arquivo)
+        imagem_enviada_no_chatbot.save(caminho_do_arquivo)
+        caminho_da_imagem = caminho_do_arquivo
+        return 'Imagem recebida com sucesso!', 200
+    return 'Nenhum arquivo foi enviado', 400
 
 
 if __name__ == "__main__":
