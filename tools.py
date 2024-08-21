@@ -123,5 +123,5 @@ def chamar_ferramenta(prompt):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-prompt = "Qual é o status do meu pedido C001?"
-chamar_ferramenta(prompt)
+# prompt = "Qual é o status do meu pedido C001?"
+# chamar_ferramenta(prompt)
