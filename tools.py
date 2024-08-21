@@ -2,6 +2,7 @@ import anthropic
 import dotenv
 import os
 from helpers import *
+import json
 
 dotenv.load_dotenv()
 cliente = anthropic.Anthropic(
@@ -65,7 +66,6 @@ def chamar_ferramenta(prompt):
         mensagem = cliente.messages.create(
             model=modelo,
             max_tokens=4000,
-            temperature=0,
             tools=ferramentas,
             messages=[
                 {
@@ -79,10 +79,41 @@ def chamar_ferramenta(prompt):
                 }
             ]
         )
-        print(mensagem)
-        print(f"Motivo de Parada: {mensagem.stop_reason}")
-        print(f"Conteúdo: {mensagem.content[0].text}")
-        return mensagem
+        # print(mensagem)
+        # print(f"Motivo de Parada: {mensagem.stop_reason}")
+        # print(f"Conteúdo: {mensagem.content}")
+        while mensagem.stop_reason == "tool_use":
+            ferramenta_usada = next(block for block in mensagem.content if block.type=='tool_use')
+            ferramenta_nome = ferramenta_usada.name
+            ferramenta_input = ferramenta_usada.input
+            resultado_ferramenta = processa_chamada_de_ferramenta(ferramenta_nome,ferramenta_input)
+            resultado_ferramenta_texto = str(resultado_ferramenta)
+            mensagem_anterior_texto = mensagem.content[0].text
+            mensagens_ferramenta = [{"role": "user", "content": prompt_do_usuario},
+                        {"role": "assistant", "content": mensagem_anterior_texto},
+                        {
+                            "role": "user",
+                            "content":json.dumps(
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": ferramenta_usada.id,
+                                    "content": resultado_ferramenta_texto,
+                                }
+                            ),
+                        },
+                    ]
+            mensagem = cliente.messages.create(
+                model=modelo,
+                max_tokens=4000,
+                tools=ferramentas,
+                messages= mensagens_ferramenta
+            )
+                    
+            print(f"Motivo de Parada: {mensagem.stop_reason}")
+            print(f"Conteúdo: {mensagem.content}")
+        resposta_final = mensagem.content[0].text
+        print(resposta_final)
+        return resposta_final
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:
